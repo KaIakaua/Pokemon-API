@@ -2,7 +2,7 @@
 // Global variables
 const POKEAPI_BASE_URL = 'https://pokeapi.co/api/v2/';
 const MAX_POKEMON_ID = 251;
-const MAX_ATTEMPTS = 20;
+const MAX_ATTEMPTS = 10;
 
 // DOM references
 const guessInput = document.getElementById('guess-input');
@@ -76,8 +76,26 @@ async function fetchPokemonList() {
 
 // Clears the results table and prepares it for new results
 function populateDatalist() {
+
+    if (!pokemonDatalist) {
+        console.error('Datalist element not found in the DOM.');
+        return;
+    }
+    if (!pokemonList || pokemonList.length === 0) {
+        console.warn('No Pokémon data available for datalist.');
+        pokemonDatalist.innerHTML = '';
+        return;
+    }
+
     pokemonDatalist.innerHTML = '';
-    pokemonList.forEach(pokemon => {
+
+    const sortedList = [...pokemonList];
+    sortedList.sort((pokemonA, pokemonB) => {
+        return pokemonA.name.localeCompare(pokemonB.name);
+    });
+
+
+    sortedList.forEach(pokemon => {
         const option = document.createElement('option');
         option.value = pokemon.name;
         pokemonDatalist.appendChild(option);
