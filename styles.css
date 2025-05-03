@@ -1,6 +1,6 @@
 body {
     font-family: system-ui;
-    background-image: url("/img/pokemon-background.jpeg");
+    background-image: url("img/pokemon-background.jpeg");
     background-size: cover;
     background-position: center center;
     background-repeat: no-repeat;
