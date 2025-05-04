@@ -262,14 +262,14 @@ async function handleGuess() {
 
         // Verify victory
         if (comparisonResults.name === "correct") {
-            gameStatus.innerHTML = `Correct! You guessed <strong>${secretPokemon.name}</strong> in ${attempts} attempts.<span class="revealed-sprite-wrapper"><img src="${secretPokemon.sprite}" alt="${secretPokemon.name}"></span>`;
+            gameStatus.innerHTML = `Correct! You guessed <strong>${secretPokemon.name}</strong> in ${attempts} attempts.<span class="revealed-sprite-wrapper"><img class="rotate" src="${secretPokemon.sprite}" alt="${secretPokemon.name}"></span>`;
             gameOver = true;
             showResetButton();
 
         } else if (attempts >= MAX_ATTEMPTS) {
 
             // Verify defeat
-            gameStatus.innerHTML = `Game over! The secret Pokemon was <strong>${secretPokemon.name}</strong>. <span class="revealed-sprite-wrapper"><img src="${secretPokemon.sprite}" alt="${secretPokemon.name}"></span>`;
+            gameStatus.innerHTML = `Game over! The secret Pokemon was <strong>${secretPokemon.name}</strong>. <span class="revealed-sprite-wrapper"><img class="rotate" src="${secretPokemon.sprite}" alt="${secretPokemon.name}"></span>`;
             gameOver = true;
             showResetButton();
 
@@ -380,14 +380,14 @@ function generationNameToNumber(genName) {
 }
 
 // Display the results in a table
-function displayGuessResult(guessData, comparisonResults, attemptNumber) {
+function displayGuessResult(guessData, comparisonResults) {
     if (!resultsBody) return;
 
     const row = resultsBody.insertRow(0);
 
-    const attemptCell = row.insertCell();
-    attemptCell.innerHTML = `<img src="${guessData.sprite}" alt="${guessData.name}">`;
-    attemptCell.classList.add('text-center');
+    const spriteCell = row.insertCell();
+    spriteCell.innerHTML = `<img src="${guessData.sprite}" alt="${guessData.name}">`;
+    spriteCell.classList.add('text-center');
 
     const nameCell = row.insertCell();
     nameCell.textContent = guessData.name;
