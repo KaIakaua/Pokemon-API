@@ -7,10 +7,10 @@ const MAX_ATTEMPTS = 10;
 // DOM references
 const guessInput = document.getElementById('guess-input');
 const guessButton = document.getElementById('guess-button');
-const pokemonDatalist = document.getElementById('pokemon-list-datalist');
 const resultsBody = document.getElementById('results-body');
 const gameStatus = document.getElementById('game-status');
 const resetButton = document.getElementById('reset-button');
+const suggestionsContainer = document.getElementById('suggestions-container');
 
 // Status of the game
 let pokemonList = []; // Data of the pokemon, name or url or other data
@@ -27,15 +27,20 @@ async function initGame() {
     attempts = 0;
     secretPokemon = null;
 
+    if (suggestionsContainer) {
+        suggestionsContainer.innerHTML = '';
+        suggestionsContainer.style.display = 'none';
+    }
+
     try {
         await fetchPokemonList();
-        populateDatalist();
         await selectAndFetchSecretPokemon();
         gameStatus.textContent = `Guess the Pokémon! You have ${MAX_ATTEMPTS} attempts.`;
         enableInput();
     } catch (error) {
         console.error('Error initializing game:', error);
         gameStatus.textContent = 'Error loading Pokémon. Please try again.';
+        disableInput();
     }
 }
 
@@ -60,47 +65,137 @@ function disableInput() {
     guessButton.disabled = true;
 }
 
+// Extract the ID from the URL
+/**
+ * @param {Array} resultsArray - The array from data.results.
+ * @returns {Array} A new array of objects, each with name, url, and id.
+ */
+
+function processPokemonListResults(resultsArray) {
+    if (!Array.isArray(resultsArray)) {
+        console.error('Invalid input to process: expected an array.');
+        return [];
+    }
+    return resultsArray.map(pokemon => {
+        const urlParts = pokemon.url.split('/');
+        const id = urlParts[urlParts.length - 2];
+        const parsedId = parseInt(id);
+        if (isNaN(parsedId)) {
+            console.warn(`Could not parse ID from URL: ${pokemon.url}`);
+        }
+        return {
+            name: pokemon.name,
+            url: pokemon.url,
+            id: parsedId
+        }
+    })
+}
+
+
 // Call the API to fetch the details of the pokemon
 async function fetchPokemonList() {
     try {
         const response = await fetch (`${POKEAPI_BASE_URL}pokemon?limit=${MAX_POKEMON_ID}`);
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const data = await response.json();
-        pokemonList = data.results; 
+
+        pokemonList = processPokemonListResults(data.results); 
         console.log(`Loaded pokemon list from API: ${pokemonList.length} Pokémon`);
+
+        pokemonList.sort((a, b) => a.name.localeCompare(b.name)); 
+        console.log("Pokemon list sorted alphabetically")
+
     } catch (error) {
         console.error('Error fetching Pokémon list:', error);
+        pokemonList = [];
         throw error; 
     }
 }
 
-// Clears the results table and prepares it for new results
-function populateDatalist() {
-
-    if (!pokemonDatalist) {
-        console.error('Datalist element not found in the DOM.');
-        return;
-    }
-    if (!pokemonList || pokemonList.length === 0) {
-        console.warn('No Pokémon data available for datalist.');
-        pokemonDatalist.innerHTML = '';
+// Function to handle suggestions in search bar
+function handleInputChange() {
+    if (!guessInput || !suggestionsContainer || !pokemonList) {
+        console.warn('Input or suggestions container not found or pokemonList is empty.');
         return;
     }
 
-    pokemonDatalist.innerHTML = '';
+    const inputText = guessInput.value.trim().toLowerCase();
+    if (inputText === '') {
+        suggestionsContainer.innerHTML = '';
+        suggestionsContainer.style.display = 'none';
+        return;
+    }
 
-    const sortedList = [...pokemonList];
-    sortedList.sort((pokemonA, pokemonB) => {
-        return pokemonA.name.localeCompare(pokemonB.name);
-    });
+    const filteredPokemon = pokemonList.filter(pokemon =>
+        pokemon.name.toLowerCase().startsWith(inputText)
+    );
+    const topSuggestions = filteredPokemon.slice(0, 5); 
+    suggestionsContainer.innerHTML = ''; 
 
+    // Transform the suggestions into buttons
+    if (topSuggestions.length > 0) {
+        topSuggestions.forEach(pokemon => {
+            const suggestionButton = document.createElement('button');
+            suggestionButton.type = 'button';
+            suggestionButton.classList.add(
+                'list-group-item',
+                'list-group-item-action',
+                'suggestion-item',
+                'd-flex',
+                'align-items-center'
+            )
+            
+            const spriteImg = document.createElement('img');
+            spriteImg.alt = pokemon.name;
+            spriteImg.classList.add('suggestion-sprite');
+            spriteImg.loading = 'lazy';
+            spriteImg.onload = function() {
+                this.classList.add('loaded');
+            }
+            spriteImg.onerror = function() {
+                 this.style.display = 'none'; 
+            }
 
-    sortedList.forEach(pokemon => {
-        const option = document.createElement('option');
-        option.value = pokemon.name;
-        pokemonDatalist.appendChild(option);
-    });
+            // Sets the suggestion sprite based on the pokemon ID
+            if (pokemon.id) {
+                spriteImg.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`;
+            } else {
+                spriteImg.src = '';
+                console.warn(`No ID found for Pokémon: ${pokemon.name}`);
+            }
+
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = pokemon.name;
+            nameSpan.classList.add('suggestion-name');
+            suggestionButton.appendChild(spriteImg);
+            suggestionButton.appendChild(nameSpan);
+            
+            suggestionButton.addEventListener('click', () => {
+                guessInput.value = pokemon.name;
+                suggestionsContainer.innerHTML = '';
+                suggestionsContainer.style.display = 'none';
+                if (guessInput) guessInput.focus();
+                handleGuess();
+            })
+            suggestionsContainer.appendChild(suggestionButton);
+        })
+
+        suggestionsContainer.style.display = 'block';
+    } else {
+        suggestionsContainer.style.display = 'none';
+    }
 }
+
+if (guessInput) {
+    guessInput.addEventListener('input', handleInputChange);
+}
+
+document.addEventListener('click', (event) => {
+    if (guessInput && suggestionsContainer && !guessInput.contains(event.target) && !suggestionsContainer.contains(event.target)) {
+        suggestionsContainer.innerHTML = '';
+        suggestionsContainer.style.display = 'none';
+    }
+})
 
 // Selects the pokemon to get the details
 async function selectAndFetchSecretPokemon() {
@@ -291,7 +386,7 @@ function displayGuessResult(guessData, comparisonResults, attemptNumber) {
     const row = resultsBody.insertRow(0);
 
     const attemptCell = row.insertCell();
-    attemptCell.textContent = `#${attemptNumber}`;
+    attemptCell.innerHTML = `<img src="${guessData.sprite}" alt="${guessData.name}">`;
     attemptCell.classList.add('text-center');
 
     const nameCell = row.insertCell();

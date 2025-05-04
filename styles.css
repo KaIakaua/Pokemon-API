@@ -1,5 +1,5 @@
 body {
-    font-family: system-ui;
+    font-family: "helvetica neue", helvetica ,system-ui;
     background-image: url("img/pokemon-background.jpeg");
     background-size: cover;
     background-position: center center;
@@ -19,14 +19,47 @@ body {
     margin-bottom: 40px;
 }
 
+
+
 .feedback-cell {
     padding: 0.5rem;
     text-align: center;
     vertical-align: middle;
-    border: 1px solid #dee2e6;
     color: white;
     font-weight: bold;
     text-transform: capitalize;
+}
+
+thead th {
+    font-family: "Rock Salt", cursive;
+}
+
+thead th,
+tfoot th,
+tfoot td {
+  background: linear-gradient(to bottom, rgb(0 0 0 / 10%), rgb(0 0 0 / 50%));
+  border: 3px solid purple;
+}
+
+th {
+    letter-spacing: 2px;
+}
+
+td {
+    letter-spacing: 1px;
+}
+
+tbody td {
+    text-align: center;
+}
+
+td,
+th {
+    border: 3px solid purple;
+}
+
+tbody {
+    margin-bottom: 2px;
 }
 
 .feedback-cell.correct {
@@ -34,7 +67,6 @@ body {
 }
 .feedback-cell.partial {
     background-color: #ffc107;
-    color: black;
 }
 .feedback-cell.incorrect,
 .feedback-cell.higher,
@@ -73,4 +105,33 @@ body {
 
 .revealed-sprite-wrapper img {
     display: block;
+}
+
+#suggestions-container {
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid rgba(0, 0, 0, 0.175);
+    border-top: none;
+    border-radius: 0 0 var(--bs-border-radius) var(--bs-border-radius);
+}
+
+.suggestion-item {
+    padding: 0.5rem 0.75rem;
+    font-size: 1.05rem;
+}
+
+.suggestion-sprite {
+    width: 120px;
+    margin-right: 0.75rem;
+    object-fit: contain;
+    vertical-align: middle;
+    opacity: 0;
+    transition: opacity 0.1s ease-in-out;
+}
+.suggestion-sprite.loaded {
+    opacity: 1;
+}
+
+.suggestion-name {
+    text-transform: capitalize;
 }
